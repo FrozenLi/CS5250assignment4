@@ -20,9 +20,11 @@ class Process:
         self.id = id
         self.arrive_time = arrive_time
         self.burst_time = burst_time
+        self.waiting_time = 0
+        self.last_update = self.arrive_time
     #for printing purpose
     def __repr__(self):
-        return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
+        return ('[id %d : arrival_time %d,  burst_time %d, waiting time %d]'%(self.id, self.arrive_time, self.burst_time,self.waiting_time))
 
 def FCFS_scheduling(process_list):
     #store the (switching time, proccess_id) pair
@@ -54,11 +56,23 @@ def SRTF_scheduling(process_list):
     current_time=0
     waiting_time=0
     for process in process_list:
+
         available_process,actions,current_time=process_SRTF(available_process,start_time=current_time,end_time=process.arrive_time)
         schedule=schedule+actions
+        if check_complete(available_process):
+            print("complete")
+            current_time=process.arrive_time
         available_process.append(process)
-    available_process+=process_SRTF(available_process,start_time=current_time,end_time=1000)
-    return schedule, 0.0
+    available_process,actions,current_time=process_SRTF(available_process,start_time=current_time,end_time=1000)
+    schedule = schedule+actions
+
+   # print(available_process)
+    for process in available_process:
+        waiting_time+=process.waiting_time
+    average_waiting_time = waiting_time/float(len(available_process))
+
+
+    return schedule, average_waiting_time
 
 def process_SRTF(available_process,start_time,end_time):
     if len(available_process)<=0:
@@ -68,6 +82,7 @@ def process_SRTF(available_process,start_time,end_time):
     while current_time<end_time and (check_complete(available_process)==False):
 
         process_to_do_pos = min_process(available_process)
+        available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time)
 
         if available_process[process_to_do_pos].burst_time+current_time<=end_time:
             processes.append((current_time,available_process[process_to_do_pos].id))
@@ -79,6 +94,7 @@ def process_SRTF(available_process,start_time,end_time):
             available_process[process_to_do_pos].burst_time=available_process[process_to_do_pos].burst_time-(end_time-current_time)
             current_time=end_time
 
+
     return available_process,processes,current_time
 
 def check_complete(process_list):
@@ -86,6 +102,17 @@ def check_complete(process_list):
         if process.burst_time>0:
             return False
     return True
+
+def update_waiting_time(process_list,current_process,current_time):
+    print(current_time)
+    for i in range(0,len(process_list)):
+
+        print(process_list[i])
+        if process_list[i]!=current_process and current_time>process_list[i].arrive_time and process_list[i].burst_time>0:
+            print("update waiting time")
+            process_list[i].waiting_time+=(current_time-process_list[i].last_update)
+        process_list[i].last_update=current_time
+    return process_list
 
 
 def min_process(available_process):
