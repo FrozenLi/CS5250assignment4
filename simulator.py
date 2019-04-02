@@ -10,6 +10,7 @@ Output files:
     SJF.txt
 '''
 import sys
+import copy
 
 input_file = 'input.txt'
 
@@ -41,10 +42,68 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum ):
+
+
+
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
 def SRTF_scheduling(process_list):
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
+    remaining_process = copy.deepcopy(process_list)
+    schedule=[]
+    available_process=[]
+    current_time=0
+    waiting_time=0
+    for process in process_list:
+        available_process,actions,current_time=process_SRTF(available_process,start_time=current_time,end_time=process.arrive_time)
+        schedule=schedule+actions
+        available_process.append(process)
+    available_process+=process_SRTF(available_process,start_time=current_time,end_time=1000)
+    return schedule, 0.0
+
+def process_SRTF(available_process,start_time,end_time):
+    if len(available_process)<=0:
+        return available_process,[],start_time
+    current_time = start_time
+    processes=[]
+    while current_time<end_time and (check_complete(available_process)==False):
+
+        process_to_do_pos = min_process(available_process)
+
+        if available_process[process_to_do_pos].burst_time+current_time<=end_time:
+            processes.append((current_time,available_process[process_to_do_pos].id))
+            current_time+=available_process[process_to_do_pos].burst_time
+            available_process[process_to_do_pos].burst_time=0
+
+        else:
+            processes.append((current_time,available_process[process_to_do_pos].id))
+            available_process[process_to_do_pos].burst_time=available_process[process_to_do_pos].burst_time-(end_time-current_time)
+            current_time=end_time
+
+    return available_process,processes,current_time
+
+def check_complete(process_list):
+    for process in process_list:
+        if process.burst_time>0:
+            return False
+    return True
+
+
+def min_process(available_process):
+    #find one non complete task
+
+    for i in range(0,len(available_process)):
+        if available_process[i].burst_time>0:
+            min_process_pos=i
+            break
+
+    #find minimum
+    for i in range(0,len(available_process)):
+        if available_process[i].burst_time<available_process[min_process_pos].burst_time and available_process[i].burst_time>0:
+            min_process_pos=i
+    return min_process_pos
+
+
+
 
 def SJF_scheduling(process_list, alpha):
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
