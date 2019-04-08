@@ -25,6 +25,8 @@ class Process:
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d, waiting time %d]'%(self.id, self.arrive_time, self.burst_time,self.waiting_time))
+    def update_pid(self,pid):
+        self.pid = pid
 
 def FCFS_scheduling(process_list):
     #store the (switching time, proccess_id) pair
@@ -55,15 +57,18 @@ def SRTF_scheduling(process_list):
     available_process=[]
     current_time=0
     waiting_time=0
+    pid = 0
+    last_process_pid =-1
     for process in process_list:
-
-        available_process,actions,current_time=process_SRTF(available_process,start_time=current_time,end_time=process.arrive_time)
+        process.update_pid(pid)
+        pid+=1
+        available_process,actions,current_time,last_process_pid=process_SRTF(available_process,current_time,process.arrive_time,last_process_pid)
         schedule=schedule+actions
         if check_complete(available_process):
             print("complete")
             current_time=process.arrive_time
         available_process.append(process)
-    available_process,actions,current_time=process_SRTF(available_process,start_time=current_time,end_time=1000)
+    available_process,actions,current_time,last_process_pid=process_SRTF(available_process,current_time,1000,last_process_pid)
     schedule = schedule+actions
 
    # print(available_process)
@@ -74,9 +79,9 @@ def SRTF_scheduling(process_list):
 
     return schedule, average_waiting_time
 
-def process_SRTF(available_process,start_time,end_time):
+def process_SRTF(available_process,start_time,end_time,last_process_pid):
     if len(available_process)<=0:
-        return available_process,[],start_time
+        return available_process,[],start_time,last_process_pid
     current_time = start_time
     processes=[]
     while current_time<end_time and (check_complete(available_process)==False):
@@ -85,17 +90,21 @@ def process_SRTF(available_process,start_time,end_time):
         available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time)
 
         if available_process[process_to_do_pos].burst_time+current_time<=end_time:
-            processes.append((current_time,available_process[process_to_do_pos].id))
+            if last_process_pid == -1 or last_process_pid != available_process[process_to_do_pos].pid:
+                processes.append((current_time,available_process[process_to_do_pos].id))
+            last_process_pid = available_process[process_to_do_pos].pid
             current_time+=available_process[process_to_do_pos].burst_time
             available_process[process_to_do_pos].burst_time=0
 
         else:
-            processes.append((current_time,available_process[process_to_do_pos].id))
+            if last_process_pid == -1 or last_process_pid != available_process[process_to_do_pos].pid:
+                processes.append((current_time,available_process[process_to_do_pos].id))
+            last_process_pid = available_process[process_to_do_pos].pid
             available_process[process_to_do_pos].burst_time=available_process[process_to_do_pos].burst_time-(end_time-current_time)
             current_time=end_time
 
 
-    return available_process,processes,current_time
+    return available_process,processes,current_time,last_process_pid
 
 def check_complete(process_list):
     for process in process_list:
