@@ -27,6 +27,8 @@ class Process:
         return ('[id %d : arrival_time %d,  burst_time %d, waiting time %d]'%(self.id, self.arrive_time, self.burst_time,self.waiting_time))
     def update_pid(self,pid):
         self.pid = pid
+    def update_estimate_time(self,estimate_time):
+        self.estimate_time = estimate_time
 
 def FCFS_scheduling(process_list):
     #store the (switching time, proccess_id) pair
@@ -203,7 +205,67 @@ def min_process(available_process):
 
 
 def SJF_scheduling(process_list, alpha):
+    remaining_process = copy.deepcopy(process_list)
+    schedule = []
+    available_process = []
+    current_time = 0
+    waiting_time = 0
+    pid = 0
+    last_process_pid = -1
+    guess = 5
+
+    for process in remaining_process:
+        guess=process.burst_time*alpha+(1-alpha) * guess
+        process.update_pid(pid)
+        pid+=1
+        process.update_estimate_time(guess)
+
+        if process.arrive_time<=current_time:
+            available_process.append(process)
+            continue
+        else:
+            available_process,processes,current_time = process_SJF(available_process,current_time,process.arrive_time)
+            available_process.append(process)
+            schedule = schedule + processes
+    available_process, processes, current_time = process_SJF(available_process, current_time, 1000)
+    schedule = schedule + processes
+
+    # print(available_process)
+    for process in available_process:
+        waiting_time += process.waiting_time
+    average_waiting_time = waiting_time / float(len(available_process))
+
+    return schedule, average_waiting_time
+
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
+
+def process_SJF(available_process,start_time,end_time):
+    if len(available_process)<=0:
+        return available_process,[],start_time
+    current_time = start_time
+    processes=[]
+
+    while current_time < end_time and (check_complete(available_process)==False):
+        process_to_do_pos = find_SJF_process(available_process)
+        available_process = update_waiting_time(available_process, available_process[process_to_do_pos], current_time)
+        processes.append((current_time, available_process[process_to_do_pos].id))
+        current_time += available_process[process_to_do_pos].burst_time
+        print(current_time)
+        available_process[process_to_do_pos].burst_time=0
+    return available_process,processes,current_time
+
+
+
+def find_SJF_process(available_processes):
+
+    for pos in range(0,len(available_processes)):
+        if available_processes[pos].estimate_time >0 and available_processes[pos].burst_time>0:
+            SJF_process_pos = pos
+            break
+    for pos in range(0,len(available_processes)):
+        if available_processes[pos].estimate_time < available_processes[SJF_process_pos].estimate_time and available_processes[pos].burst_time>0:
+            SJF_process_pos = pos
+    return SJF_process_pos
 
 
 def read_input():
