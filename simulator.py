@@ -46,10 +46,71 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum ):
+    remaining_process = copy.deepcopy(process_list)
+    schedule = []
+    available_process = []
+    current_time = 0
+    waiting_time = 0
+    pid = 0
+    last_process_pid = -1
+    for process in remaining_process:
+        process.update_pid(pid)
+        pid+=1
+        available_process, actions, current_time, last_process_pid = process_RR(available_process, current_time,
+                                                                                  process.arrive_time, last_process_pid,time_quantum)
+        schedule = schedule + actions
+        if check_complete(available_process):
+            print("complete")
+            current_time = process.arrive_time
+        available_process.append(process)
+    available_process, actions, current_time, last_process_pid = process_RR(available_process, current_time, 1000,
+                                                                              last_process_pid,time_quantum)
+    schedule = schedule + actions
+
+    # print(available_process)
+    for process in available_process:
+        waiting_time += process.waiting_time
+    average_waiting_time = waiting_time / float(len(available_process))
+
+    return schedule, average_waiting_time
 
 
 
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
+def process_RR(available_process,start_time,end_time,last_process_pid,time_quantum):
+    if(len(available_process)<=0):
+        return available_process,[],start_time,last_process_pid
+    current_time = start_time
+    processes=[]
+
+    while current_time <end_time and (check_complete(available_process)==False):
+        process_pos = find_next_process(available_process,last_process_pid)
+        available_process = update_waiting_time(available_process, available_process[process_pos], current_time)
+        if last_process_pid == -1 or last_process_pid != available_process[process_pos].pid:
+            processes.append((current_time, available_process[process_pos].id))
+        last_process_pid = available_process[process_pos].pid
+        if available_process[process_pos].burst_time < time_quantum:
+            current_time += available_process[process_pos].burst_time
+            available_process[process_pos].burst_time = 0
+        else:
+            current_time += time_quantum
+            available_process[process_pos].burst_time -= time_quantum
+    return available_process,processes,current_time,last_process_pid
+
+
+def find_next_process(available_process,last_process_pid):
+    for process_pos in range(0,len(available_process)):
+        if available_process[process_pos].pid > last_process_pid and available_process[process_pos].burst_time>0:
+            return process_pos
+    return 0
+
+
+
+
+
+
+
+
+
 
 def SRTF_scheduling(process_list):
     remaining_process = copy.deepcopy(process_list)
@@ -59,7 +120,7 @@ def SRTF_scheduling(process_list):
     waiting_time=0
     pid = 0
     last_process_pid =-1
-    for process in process_list:
+    for process in remaining_process:
         process.update_pid(pid)
         pid+=1
         available_process,actions,current_time,last_process_pid=process_SRTF(available_process,current_time,process.arrive_time,last_process_pid)
