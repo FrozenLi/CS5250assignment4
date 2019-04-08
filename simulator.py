@@ -212,24 +212,29 @@ def SJF_scheduling(process_list, alpha):
     waiting_time = 0
     pid = 0
     last_process_pid = -1
+    process_guess={}
     guess = 5
 
     for process in remaining_process:
-        guess=process.burst_time*alpha+(1-alpha) * guess
+        if(process.id not in process_guess.keys()):
+            process_guess[process.id]=5
+        process_guess[process.id]=process.burst_time*alpha+(1-alpha) * process_guess[process.id]
         process.update_pid(pid)
         pid+=1
-        process.update_estimate_time(guess)
+        process.update_estimate_time(process_guess[process.id])
 
         if process.arrive_time<=current_time:
             available_process.append(process)
             continue
         else:
             available_process,processes,current_time = process_SJF(available_process,current_time,process.arrive_time)
+            if check_complete(available_process) and current_time < process.arrive_time:
+                print("complete")
+                current_time = process.arrive_time
             available_process.append(process)
             schedule = schedule + processes
     available_process, processes, current_time = process_SJF(available_process, current_time, 1000)
     schedule = schedule + processes
-
     # print(available_process)
     for process in available_process:
         waiting_time += process.waiting_time
