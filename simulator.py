@@ -86,7 +86,6 @@ def process_RR(available_process,start_time,end_time,last_process_pid,time_quant
 
     while current_time <end_time and (check_complete(available_process)==False):
         process_pos = find_next_process(available_process,last_process_pid)
-        available_process = update_waiting_time(available_process, available_process[process_pos], current_time)
         if last_process_pid == -1 or last_process_pid != available_process[process_pos].pid:
             processes.append((current_time, available_process[process_pos].id))
         last_process_pid = available_process[process_pos].pid
@@ -96,12 +95,17 @@ def process_RR(available_process,start_time,end_time,last_process_pid,time_quant
         else:
             current_time += time_quantum
             available_process[process_pos].burst_time -= time_quantum
+        available_process = update_waiting_time(available_process, available_process[process_pos], current_time)
+
     return available_process,processes,current_time,last_process_pid
 
 
 def find_next_process(available_process,last_process_pid):
     for process_pos in range(0,len(available_process)):
         if available_process[process_pos].pid > last_process_pid and available_process[process_pos].burst_time>0:
+            return process_pos
+    for process_pos in range(0,len(available_process)):
+        if available_process[process_pos].burst_time>0:
             return process_pos
     return 0
 
@@ -150,7 +154,6 @@ def process_SRTF(available_process,start_time,end_time,last_process_pid):
     while current_time<end_time and (check_complete(available_process)==False):
 
         process_to_do_pos = min_process(available_process)
-        available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time)
 
         if available_process[process_to_do_pos].burst_time+current_time<=end_time:
             if last_process_pid == -1 or last_process_pid != available_process[process_to_do_pos].pid:
@@ -165,6 +168,8 @@ def process_SRTF(available_process,start_time,end_time,last_process_pid):
             last_process_pid = available_process[process_to_do_pos].pid
             available_process[process_to_do_pos].burst_time=available_process[process_to_do_pos].burst_time-(end_time-current_time)
             current_time=end_time
+        available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time)
+
 
 
     return available_process,processes,current_time,last_process_pid
@@ -252,10 +257,11 @@ def process_SJF(available_process,start_time,end_time):
 
     while current_time < end_time and (check_complete(available_process)==False):
         process_to_do_pos = find_SJF_process(available_process)
-        available_process = update_waiting_time(available_process, available_process[process_to_do_pos], current_time)
         processes.append((current_time, available_process[process_to_do_pos].id))
         current_time += available_process[process_to_do_pos].burst_time
         print(current_time)
+        available_process = update_waiting_time(available_process, available_process[process_to_do_pos], current_time)
+
         available_process[process_to_do_pos].burst_time=0
     return available_process,processes,current_time
 
