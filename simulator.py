@@ -191,7 +191,15 @@ def update_waiting_time(process_list,current_process,current_time):
         process_list[i].last_update=current_time
     return process_list
 
-
+def update_waiting_time_SJF(process_list,current_process,current_time):
+    print(current_time)
+    for i in range(0,len(process_list)):
+        print(process_list[i])
+        if current_time>process_list[i].arrive_time and process_list[i].burst_time>0:
+            print("update waiting time")
+            process_list[i].waiting_time+=(current_time-process_list[i].last_update)
+        process_list[i].last_update=current_time
+    return process_list
 def min_process(available_process):
     #find one non complete task
 
@@ -256,11 +264,12 @@ def process_SJF(available_process,start_time,end_time):
     processes=[]
 
     while current_time < end_time and (check_complete(available_process)==False):
+        print(available_process)
         process_to_do_pos = find_SJF_process(available_process)
         processes.append((current_time, available_process[process_to_do_pos].id))
+        available_process = update_waiting_time_SJF(available_process, available_process[process_to_do_pos], current_time)
         current_time += available_process[process_to_do_pos].burst_time
         print(current_time)
-        available_process = update_waiting_time(available_process, available_process[process_to_do_pos], current_time)
 
         available_process[process_to_do_pos].burst_time=0
     return available_process,processes,current_time
