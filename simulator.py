@@ -63,7 +63,8 @@ def RR_scheduling(process_list, time_quantum ):
         schedule = schedule + actions
         if check_complete(available_process):
             print("complete")
-            current_time = process.arrive_time
+            if current_time<process.arrive_time:
+                current_time = process.arrive_time
         available_process.append(process)
     available_process, actions, current_time, last_process_pid = process_RR(available_process, current_time, 1000,
                                                                               last_process_pid,time_quantum)
@@ -86,6 +87,8 @@ def process_RR(available_process,start_time,end_time,last_process_pid,time_quant
 
     while current_time <end_time and (check_complete(available_process)==False):
         process_pos = find_next_process(available_process,last_process_pid)
+        available_process = update_waiting_time(available_process, available_process[process_pos], current_time,last_process_pid)
+
         if last_process_pid == -1 or last_process_pid != available_process[process_pos].pid:
             processes.append((current_time, available_process[process_pos].id))
         last_process_pid = available_process[process_pos].pid
@@ -95,7 +98,7 @@ def process_RR(available_process,start_time,end_time,last_process_pid,time_quant
         else:
             current_time += time_quantum
             available_process[process_pos].burst_time -= time_quantum
-        available_process = update_waiting_time(available_process, available_process[process_pos], current_time)
+        available_process = update_waiting_time(available_process, available_process[process_pos], current_time,last_process_pid)
 
     return available_process,processes,current_time,last_process_pid
 
@@ -133,7 +136,8 @@ def SRTF_scheduling(process_list):
         schedule=schedule+actions
         if check_complete(available_process):
             print("complete")
-            current_time=process.arrive_time
+            if current_time<process.arrive_time:
+                current_time=process.arrive_time
         available_process.append(process)
     available_process,actions,current_time,last_process_pid=process_SRTF(available_process,current_time,1000,last_process_pid)
     schedule = schedule+actions
@@ -168,7 +172,7 @@ def process_SRTF(available_process,start_time,end_time,last_process_pid):
             last_process_pid = available_process[process_to_do_pos].pid
             available_process[process_to_do_pos].burst_time=available_process[process_to_do_pos].burst_time-(end_time-current_time)
             current_time=end_time
-        available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time)
+        available_process=update_waiting_time(available_process,available_process[process_to_do_pos],current_time,last_process_pid)
 
 
 
@@ -180,14 +184,15 @@ def check_complete(process_list):
             return False
     return True
 
-def update_waiting_time(process_list,current_process,current_time):
+def update_waiting_time(process_list,current_process,current_time,last_process_pid):
     print(current_time)
     for i in range(0,len(process_list)):
 
-        print(process_list[i])
-        if process_list[i]!=current_process and current_time>process_list[i].arrive_time and process_list[i].burst_time>0:
+        if process_list[i].pid!=last_process_pid and current_time>process_list[i].arrive_time and process_list[i].burst_time>0:
             print("update waiting time")
             process_list[i].waiting_time+=(current_time-process_list[i].last_update)
+        print(process_list[i])
+
         process_list[i].last_update=current_time
     return process_list
 
@@ -243,6 +248,7 @@ def SJF_scheduling(process_list, alpha):
             available_process,processes,current_time = process_SJF(available_process,current_time,process.arrive_time)
             if check_complete(available_process) and current_time < process.arrive_time:
                 print("complete")
+
                 current_time = process.arrive_time
             available_process.append(process)
             schedule = schedule + processes
@@ -314,13 +320,13 @@ def main(argv):
     FCFS_schedule, FCFS_avg_waiting_time =  FCFS_scheduling(process_list)
     write_output('FCFS.txt', FCFS_schedule, FCFS_avg_waiting_time )
     print ("simulating RR ----")
-    RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
+    RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 10)
     write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
     print ("simulating SRTF ----")
     SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
     write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
-    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
+    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.4)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
 if __name__ == '__main__':

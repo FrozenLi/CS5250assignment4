@@ -12,6 +12,6 @@
 (72, 3)
 (90, 1)
 (100, 3)
-(108, 0)
-(118, 2)
-average waiting time 5.56 
+(108, 2)
+(117, 0)
+average waiting time 5.50 
